@@ -13,7 +13,7 @@ module ActiveMerchant #:nodoc:
         'xsi:noNamespaceSchemaLocation' => 'wirecard.xsd'
       }
 
-      PERMITTED_TRANSACTIONS = %w[ PREAUTHORIZATION CAPTURE PURCHASE ]
+      PERMITTED_TRANSACTIONS = %w[ PREAUTHORIZATION CAPTURE PURCHASE OCT QUERY]
 
       RETURN_CODES = %w[ ACK NOK ]
 
@@ -83,6 +83,16 @@ module ActiveMerchant #:nodoc:
       def refund(money, identification, options = {})
         options[:preauthorization] = identification
         commit(:bookback, money, options)
+      end
+
+      def oct(money, creditcard, options = {})
+        options[:credit_card] = creditcard
+        commit(:oct, money, options)
+      end
+
+      def query(guwid, options = {})
+        options[:preauthorization] = guwid
+        commit(:query, nil, options)
       end
 
       # Store card - Wirecard supports the notion of "Recurring
@@ -237,6 +247,12 @@ module ActiveMerchant #:nodoc:
               xml.tag! 'GuWID', options[:preauthorization]
               add_amount(xml, money)
             when :reversal
+              xml.tag! 'GuWID', options[:preauthorization]
+            when :oct
+              add_amount(xml, money)
+              xml.tag! 'Currency', options[:currency] || currency(money)
+              add_creditcard(xml, options[:credit_card])
+            when :query
               xml.tag! 'GuWID', options[:preauthorization]
             end
           end
