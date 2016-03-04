@@ -85,8 +85,12 @@ module ActiveMerchant #:nodoc:
         commit(:bookback, money, options)
       end
 
-      def oct(money, creditcard, options = {})
-        options[:credit_card] = creditcard
+      def oct(money, oct_type, options = {})
+        if oct_type.is_a? String
+          options[:guwid] = oct_type
+        else
+          options[:credit_card] = oct_type
+        end
         commit(:oct, money, options)
       end
 
@@ -251,7 +255,11 @@ module ActiveMerchant #:nodoc:
             when :oct
               add_amount(xml, money)
               xml.tag! 'Currency', options[:currency] || currency(money)
-              add_creditcard(xml, options[:credit_card])
+              if options[:credit_card]
+                add_creditcard(xml, options[:credit_card])
+              else
+                xml.tag! 'GuWID', options[:guwid]
+              end
             when :query
               xml.tag! 'GuWID', options[:preauthorization]
             end
